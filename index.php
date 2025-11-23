@@ -1,5 +1,4 @@
 <?php
-
 require_once __DIR__ . "/bootstrap.php";
 if(ALLOW_CORS){
     header("Access-Control-Allow-Origin: *");
@@ -18,21 +17,18 @@ if(empty($video_url)){
 
 }else{
     $cookie_file = __DIR__."/my_yt_cookie_file.txt";
-    // $CaptionHandle->loginWithCookieFile($cookie_file);
-    // Uncomment the line above if you need to log in
+    $CaptionHandle->loginWithCookieFile($cookie_file);
     try {
-        $obj = $CaptionHandle->getSubtitleURL($video_url);
-        if ($obj->caption_url) {
-            $captions_content = $CaptionHandle->httpRequest($obj->caption_url);
+        $caption_url = $CaptionHandle->getSubtitleURL($video_url);
+        if ($caption_url) {
+            $captions_content = $CaptionHandle->httpRequest($caption_url);
             $captions_content = html_entity_decode($captions_content);
             // Remove XML/HTML from subtitles
             // replacing "<" with " <" is to prevent some words from sticking to another
             $captions_content = str_replace("<", " <", $captions_content);
             $captions_content = strip_tags($captions_content);
             $data->caption = $captions_content;
-            $data->video_id = $obj->video_id;
-            $data->title = $obj->video_title;
-            $data->caption_url = $obj->caption_url;
+            $data->caption_url = $caption_url;
 
         } else {
             $data->error = "Couldn't get the subtitle";
