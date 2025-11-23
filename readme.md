@@ -1,13 +1,12 @@
 # YouTube Subtitles Downloader
-## 🚨 Note: This project is no longer working due to changes in YouTube's API/structure. 🚨
-----------------
-Simple PHP implementation to download YouTube subtitles
+PHP implementation for downloading YouTube subtitles using yt-dlp
 # How to Use?
-First, run:
+Install yt-dlp https://github.com/yt-dlp/yt-dlp
+
+Then run:
 ```shel
 composer update
 ```
-No libraries or dependencies are required; Composer will only be used for autoloading classes.
 
 A practical example of how to obtain the subtitles of a YouTube video:
 
@@ -17,9 +16,8 @@ require_once __DIR__ . "/bootstrap.php";
 $CaptionHandle = new \App\CaptionsHandle();
 $video_url = "https://www.youtube.com/watch?v=8ch_H8pt9M8"; // it can be just the ID too
 
-//$cookie_file = __DIR__."/my_yt_cookie_file.txt";
-//$CaptionHandle->loginWithCookieFile($cookie_file);
-// Uncomment the line above if you need to log in
+$cookie_file = __DIR__."/my_yt_cookie_file.txt";
+$CaptionHandle->loginWithCookieFile($cookie_file);
 
 try {
     $caption_url = $CaptionHandle->getSubtitleURL($video_url);
@@ -62,7 +60,7 @@ A popular one is this one: https://chromewebstore.google.com/detail/cclelndahbck
 
 I recommend that you always check the code before using it.
 
-Avoid using your main account.
+Avoid using your main Google account.
 
 **Download cookies in Netscape format**
 
