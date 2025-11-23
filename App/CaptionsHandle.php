@@ -6,7 +6,7 @@ use stdClass;
 class CaptionsHandle
 {
     private HttpRequest $HttpRequest;
-
+    private string $cookie_file_path = '';
     public function __construct()
     {
         $this->HttpRequest = new \App\HttpRequest();
@@ -15,7 +15,12 @@ class CaptionsHandle
 
     public function loginWithCookieFile($cookie_file_path): void
     {
-        $this->HttpRequest->setCookie($cookie_file_path);
+        if(file_exists($cookie_file_path)){
+            $this->cookie_file_path = $cookie_file_path;
+            $this->HttpRequest->setCookie($cookie_file_path);
+        }else{
+            exit("file $cookie_file_path does not exist!");
+        }
 
     }
 
@@ -27,6 +32,9 @@ class CaptionsHandle
      * @return stdClass Returns a stdClass object with video_title, caption_url and video_id
      * @throws Exception HTTP request exception.
      */
+
+    /*
+    // Old method - Not working anymore
     public function getSubtitleURL(string $video_id): stdClass
     {
         $obj = new stdClass();
@@ -54,6 +62,32 @@ class CaptionsHandle
         }
         return $obj;
     }
+    */
+
+
+
+    public function getSubtitleURL(string $video_id): string
+    {
+        $video_id = $this->validVideoID($video_id);
+        $video_url = "https://www.youtube.com/watch?v={$video_id}";
+
+        $yt_login = '';
+        if($this->cookie_file_path) {
+            $yt_login = "--cookies ".$this->cookie_file_path;
+        }
+
+        $cmd = 'yt-dlp '.$yt_login.' --quiet --no-warnings --skip-download --print "%(automatic_captions.pt.0.url)s" ' . escapeshellarg($video_url);
+        exec($cmd, $output, $returnCode);
+        if (!empty($output)) {
+            $sub_url = implode("\n", $output);
+            $sub_url = trim(str_replace("&fmt=","&noarg=", $sub_url));
+            if(preg_match("/^https:\/\/www\.youtube\.com\/api\/timedtext/", $sub_url)) {
+                return $sub_url;
+            }
+        }
+        return '';
+    }
+
 
 
     /**
@@ -78,26 +112,28 @@ class CaptionsHandle
      * @return string The video ID if valid; otherwise, an empty string ('').
      */
 
-   private function validVideoID(string $video_id): string
+    public function validVideoID(string $video_id): string
     {
         if ($video_id) {
-            if(str_contains($video_id, "/shorts/")) {
-                $video_id = substr($video_id, strpos($video_id, "/shorts/") + 8, 11); // for shorts URL
-            }
+            $video_id = substr($video_id, strpos($video_id, "/shorts/")+8); // for shorts
             $video_id = trim($video_id);
             if (strlen($video_id) > 11) {
                 if (preg_match("/youtu\.be/", $video_id)) {
+                    // https://youtu.be/ID
                     $video_id = substr($video_id, strrpos($video_id, "/") + 1, 11);
                 } else {
                     $video_id = substr($video_id, strpos($video_id, "?v=") + 3, 11);
                 }
             }
+
             if (preg_match("/[^a-z0-9\-_]/i", $video_id) or strlen($video_id) != 11) {
                 $video_id = '';
             }
+
         }
         return $video_id;
     }
+
 
     public function saveCaptionOnDisk($file_path, $caption): false|int
     {
